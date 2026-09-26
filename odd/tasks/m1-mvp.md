@@ -26,7 +26,7 @@
 
 | ID | Task | Route | Status | Commit |
 |---|---|---|---|---|
-| T1 | Scaffold: Vite react-ts at repo root, strict TS, Tailwind v4, shadcn/ui, ESLint, Vitest + Testing Library + fake-indexeddb, scripts incl. `verify` | delegated (writer trigger: 2+ non-trivial files) | [ ] | |
+| T1 | Scaffold: Vite react-ts at repo root, strict TS, Tailwind v4, shadcn/ui, ESLint, Vitest + Testing Library + fake-indexeddb, scripts incl. `verify` | delegated (writer trigger: 2+ non-trivial files) | [x] | 19b94ce |
 | T2 | Domain: types, Zod schemas, entry-type registry, date utils, counters, `generateDailyReport` + `renderWhatsAppText` + `renderHtml` (golden and derived tests) | delegated (writer trigger) | [ ] | |
 | T3 | Persistence: Dexie database, reports/entries/settings repositories with tests | delegated (writer trigger) | [ ] | |
 | T4 | Stores: Zustand `reportStore` (persisted data via repositories) and `uiStore` (UI state) with tests | delegated (writer trigger) | [ ] | |

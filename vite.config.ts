@@ -15,5 +15,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: ['./src/test/setup.ts'],
+    // Pin the test-runner timezone so local-date logic (utils/dates) is
+    // deterministic regardless of the machine running the tests.
+    env: {
+      TZ: 'America/Argentina/Buenos_Aires',
+    },
   },
 })
