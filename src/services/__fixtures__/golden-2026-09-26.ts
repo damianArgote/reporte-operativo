@@ -24,6 +24,10 @@ export const goldenSettings: Settings = {
   theme: 'system',
   ticketedEmoji: '📱',
   background: 'neutral',
+  // Non-empty on purpose: the golden test below asserts the rendered text
+  // is byte-for-byte unchanged, proving userName never leaks into it
+  // (domain.md Decisions #17 — app-only, never in the report).
+  userName: 'Damian',
 }
 
 function entry(overrides: Omit<DailyEntry, 'reportId' | 'denounced' | 'sortKey'> & {

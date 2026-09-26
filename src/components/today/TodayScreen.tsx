@@ -18,6 +18,7 @@ import { useCopyReport } from './useCopyReport'
  */
 export function TodayScreen() {
   const dateKey = useReportStore((state) => state.dateKey ?? todayKey())
+  const userName = useReportStore((state) => state.settings.userName)
   const togglePreview = useUiStore((state) => state.togglePreview)
   const openAddSheet = useUiStore((state) => state.openAddSheet)
   const navigate = useUiStore((state) => state.navigate)
@@ -30,6 +31,7 @@ export function TodayScreen() {
           <div>
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Hoy</p>
             <h1 className="text-3xl font-semibold tabular-nums">{formatDisplayDate(dateKey)}</h1>
+            {userName && <p className="text-sm text-muted-foreground">Hola, {userName}</p>}
           </div>
           <div className="flex gap-2 pt-1">
             <Button

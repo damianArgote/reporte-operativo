@@ -99,7 +99,7 @@ describe('dailyReportSchema', () => {
 
 describe('settingsSchema', () => {
   it('parses valid settings', () => {
-    const settings = { theme: 'dark', ticketedEmoji: '📱', background: 'arena' }
+    const settings = { theme: 'dark', ticketedEmoji: '📱', background: 'arena', userName: 'Damian' }
     expect(settingsSchema.parse(settings)).toEqual(settings)
   })
 
@@ -120,8 +120,34 @@ describe('settingsSchema', () => {
     expect(() => settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', background: 'bogus' })).toThrow()
   })
 
+  it('defaults userName to "" when missing — an old row saved before this field existed', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱' })
+    expect(parsed.userName).toBe('')
+  })
+
+  it('trims userName', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName: '  Damian  ' })
+    expect(parsed.userName).toBe('Damian')
+  })
+
+  it('rejects a userName longer than 40 characters', () => {
+    expect(() =>
+      settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName: 'a'.repeat(41) }),
+    ).toThrow()
+  })
+
+  it('accepts a userName of exactly 40 characters', () => {
+    const userName = 'a'.repeat(40)
+    expect(settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName }).userName).toBe(userName)
+  })
+
   it('exposes a default settings constant matching the schema', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ theme: 'system', ticketedEmoji: '📱', background: 'neutral' })
+    expect(DEFAULT_SETTINGS).toEqual({
+      theme: 'system',
+      ticketedEmoji: '📱',
+      background: 'neutral',
+      userName: '',
+    })
     expect(() => settingsSchema.parse(DEFAULT_SETTINGS)).not.toThrow()
   })
 })

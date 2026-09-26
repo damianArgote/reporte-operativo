@@ -40,6 +40,8 @@ the report generator.
 |---|---|---|
 | `theme` | `light \| dark \| system` | |
 | `ticketedEmoji` | string | default `📱`, see Decisions |
+| `background` | background palette preset id | default `neutral`; presets in `src/features/settings/backgroundPalette.ts` |
+| `userName` | string | trimmed, max 40, default `''`; app-only — shown in-app (Today header greeting), never in the generated report, see Decisions #17 |
 
 ## Invariants
 
@@ -115,6 +117,8 @@ value, defaulting to 📱 — see Decisions.
 | 13 | No content heuristics for `includeInReport`; the user toggles it per entry | M1 default | Keep logging fast and predictable |
 | 14 | M1 has no drag reordering; order changes by editing `time`. `sortKey` exists for later | M1 default | Golden UX rule: no extra steps |
 | 15 | When `N = 0` the summary block is omitted even if untowed entries exist | M1 default | Nothing was towed, so there is nothing to summarize |
+| 16 | Background is a preset palette (`Settings.background`), each preset with a light and a dark variant, applied via `data-background` on `<html>`; presets stay low-chroma so text contrast holds ≥4.5:1 | Confirmed | User decision 2026-09-26 |
+| 17 | `Settings.userName` is app-only: shown in-app (e.g. a Today header greeting), never included in the generated report | Confirmed | User decision 2026-09-26 |
 
 ## Open questions
 

@@ -70,6 +70,9 @@ export const settingsSchema = z.object({
   // Added after the first settings rows were saved — `.default()` keeps
   // those old rows parsing (settings.repository.ts's `get()` boundary).
   background: backgroundPaletteIdSchema.default('neutral'),
+  // App-only: shown in-app (Today header greeting), never in the
+  // generated report — see docs/specs/domain.md Decisions #17.
+  userName: z.string().trim().max(40).default(''),
 })
 
 export type EntryFields = z.infer<typeof entryFieldsSchema>
@@ -81,4 +84,5 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   ticketedEmoji: '📱',
   background: 'neutral',
+  userName: '',
 }

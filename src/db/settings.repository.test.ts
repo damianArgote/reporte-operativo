@@ -22,13 +22,13 @@ describe('settings.repository', () => {
       expect(await get()).toEqual({ ...DEFAULT_SETTINGS, theme: 'dark' })
     })
 
-    it('applies the "neutral" default for a row saved before `background` existed', async () => {
+    it('applies the "neutral" / "" defaults for a row saved before `background`/`userName` existed', async () => {
       const db = getDatabase()
       // Simulates a row written by an older app version — bypasses the
-      // repository's own `update()` (which would already fill the default).
+      // repository's own `update()` (which would already fill the defaults).
       await db.settings.put({ id: 'app', theme: 'dark', ticketedEmoji: '📱' } as SettingsRow)
 
-      expect(await get()).toEqual({ theme: 'dark', ticketedEmoji: '📱', background: 'neutral' })
+      expect(await get()).toEqual({ theme: 'dark', ticketedEmoji: '📱', background: 'neutral', userName: '' })
     })
   })
 
@@ -36,7 +36,12 @@ describe('settings.repository', () => {
     it('merges a partial patch onto the current settings', async () => {
       await update({ ticketedEmoji: '🅿️' })
       const updated = await update({ theme: 'light' })
-      expect(updated).toEqual({ theme: 'light', ticketedEmoji: '🅿️', background: 'neutral' })
+      expect(updated).toEqual({ theme: 'light', ticketedEmoji: '🅿️', background: 'neutral', userName: '' })
+    })
+
+    it('persists a userName', async () => {
+      await update({ userName: 'Damian' })
+      expect(await get()).toEqual({ ...DEFAULT_SETTINGS, userName: 'Damian' })
     })
 
     it('persists across calls (single row keyed "app")', async () => {
