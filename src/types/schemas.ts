@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isValidDateKey } from '@/utils/dates'
+import { BACKGROUND_PALETTE_IDS } from './backgroundPaletteIds'
 import { ENTRY_TYPE_IDS } from './entryTypeIds'
 
 /**
@@ -61,9 +62,14 @@ export const dailyReportSchema = z.object({
   updatedAt: z.number(),
 })
 
+export const backgroundPaletteIdSchema = z.enum(BACKGROUND_PALETTE_IDS)
+
 export const settingsSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']),
   ticketedEmoji: z.string().min(1),
+  // Added after the first settings rows were saved — `.default()` keeps
+  // those old rows parsing (settings.repository.ts's `get()` boundary).
+  background: backgroundPaletteIdSchema.default('neutral'),
 })
 
 export type EntryFields = z.infer<typeof entryFieldsSchema>
@@ -74,4 +80,5 @@ export type Settings = z.infer<typeof settingsSchema>
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   ticketedEmoji: '📱',
+  background: 'neutral',
 }

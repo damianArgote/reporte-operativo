@@ -13,14 +13,20 @@
     <meta name="apple-mobile-web-app-title" content="Registro" />
     <title>Registro diario</title>
     <script>
-      // Anti-flash: paints the resolved theme before React/IndexedDB load.
-      // IndexedDB (Settings.theme) stays the source of truth — this only
-      // reads the mirror useResolvedTheme (src/hooks/useTheme.ts) keeps in
-      // localStorage every time the resolved theme changes.
+      // Anti-flash: paints the resolved theme + background palette before
+      // React/IndexedDB load. IndexedDB (Settings.theme/background) stays
+      // the source of truth — this only reads the mirrors useResolvedTheme
+      // (src/hooks/useTheme.ts) and useBackgroundPalette
+      // (src/features/settings/useBackgroundPalette.ts) keep in localStorage
+      // every time the resolved value changes.
       try {
         var m = localStorage.getItem('theme-mirror')
         if (m === 'dark' || (m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark')
+        }
+        var bg = localStorage.getItem('background-mirror')
+        if (bg) {
+          document.documentElement.setAttribute('data-background', bg)
         }
       } catch (e) {}
     </script>

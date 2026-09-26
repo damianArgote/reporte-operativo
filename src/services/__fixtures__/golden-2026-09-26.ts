@@ -23,6 +23,7 @@ export const goldenReport: DailyReport = {
 export const goldenSettings: Settings = {
   theme: 'system',
   ticketedEmoji: '📱',
+  background: 'neutral',
 }
 
 function entry(overrides: Omit<DailyEntry, 'reportId' | 'denounced' | 'sortKey'> & {

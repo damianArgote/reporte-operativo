@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import { TodayScreen } from '@/components/today/TodayScreen'
 import { SettingsScreen } from '@/features/settings/SettingsScreen'
+import { useBackgroundPalette } from '@/features/settings/useBackgroundPalette'
 import { useResolvedTheme } from '@/hooks/useTheme'
 import { useReportStore } from '@/stores/reportStore'
 import { initNavigationSync, useUiStore } from '@/stores/uiStore'
@@ -11,9 +12,11 @@ function App() {
   const error = useReportStore((state) => state.error)
   const load = useReportStore((state) => state.load)
   const view = useUiStore((state) => state.view)
-  // Applies Settings.theme (light/dark/system) to <html> for the whole app,
-  // including the loading/error states below (T6a).
+  // Applies Settings.theme (light/dark/system) and Settings.background to
+  // <html> for the whole app, including the loading/error states below
+  // (T6a / T2).
   useResolvedTheme()
+  useBackgroundPalette()
 
   useEffect(() => {
     void load()

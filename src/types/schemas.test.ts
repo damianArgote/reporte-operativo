@@ -99,7 +99,7 @@ describe('dailyReportSchema', () => {
 
 describe('settingsSchema', () => {
   it('parses valid settings', () => {
-    const settings = { theme: 'dark', ticketedEmoji: '📱' }
+    const settings = { theme: 'dark', ticketedEmoji: '📱', background: 'arena' }
     expect(settingsSchema.parse(settings)).toEqual(settings)
   })
 
@@ -111,8 +111,17 @@ describe('settingsSchema', () => {
     expect(() => settingsSchema.parse({ theme: 'system', ticketedEmoji: '' })).toThrow()
   })
 
+  it('defaults background to "neutral" when missing — an old row saved before this field existed', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱' })
+    expect(parsed.background).toBe('neutral')
+  })
+
+  it('rejects an unknown background preset id', () => {
+    expect(() => settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', background: 'bogus' })).toThrow()
+  })
+
   it('exposes a default settings constant matching the schema', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ theme: 'system', ticketedEmoji: '📱' })
+    expect(DEFAULT_SETTINGS).toEqual({ theme: 'system', ticketedEmoji: '📱', background: 'neutral' })
     expect(() => settingsSchema.parse(DEFAULT_SETTINGS)).not.toThrow()
   })
 })
