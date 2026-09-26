@@ -135,6 +135,7 @@ describe('formatters', () => {
       ticketedEmoji: '🅿️',
       background: 'neutral',
       userName: '',
+      customBackgrounds: [],
     })
     expect(text(spans)).toBe('MEY521 un 6490/🅿️ Infraccionado.')
   })

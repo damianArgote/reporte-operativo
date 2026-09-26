@@ -22,13 +22,34 @@ describe('settings.repository', () => {
       expect(await get()).toEqual({ ...DEFAULT_SETTINGS, theme: 'dark' })
     })
 
-    it('applies the "neutral" / "" defaults for a row saved before `background`/`userName` existed', async () => {
+    it('applies the "neutral" / "" / [] defaults for a row saved before `background`/`userName`/`customBackgrounds` existed', async () => {
       const db = getDatabase()
       // Simulates a row written by an older app version — bypasses the
       // repository's own `update()` (which would already fill the defaults).
       await db.settings.put({ id: 'app', theme: 'dark', ticketedEmoji: '📱' } as SettingsRow)
 
-      expect(await get()).toEqual({ theme: 'dark', ticketedEmoji: '📱', background: 'neutral', userName: '' })
+      expect(await get()).toEqual({
+        theme: 'dark',
+        ticketedEmoji: '📱',
+        background: 'neutral',
+        userName: '',
+        customBackgrounds: [],
+      })
+    })
+
+    it('falls back background to "neutral" when it points at a custom background id that no longer exists (T4)', async () => {
+      const db = getDatabase()
+      // Simulates a row where the selected custom background was deleted
+      // separately (or never existed) — customBackgrounds no longer lists it.
+      await db.settings.put({
+        id: 'app',
+        theme: 'dark',
+        ticketedEmoji: '📱',
+        background: 'custom-99999999-9999-4999-8999-999999999999',
+        customBackgrounds: [],
+      } as unknown as SettingsRow)
+
+      expect((await get()).background).toBe('neutral')
     })
   })
 
@@ -36,7 +57,13 @@ describe('settings.repository', () => {
     it('merges a partial patch onto the current settings', async () => {
       await update({ ticketedEmoji: '🅿️' })
       const updated = await update({ theme: 'light' })
-      expect(updated).toEqual({ theme: 'light', ticketedEmoji: '🅿️', background: 'neutral', userName: '' })
+      expect(updated).toEqual({
+        theme: 'light',
+        ticketedEmoji: '🅿️',
+        background: 'neutral',
+        userName: '',
+        customBackgrounds: [],
+      })
     })
 
     it('persists a userName', async () => {

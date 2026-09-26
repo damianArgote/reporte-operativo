@@ -14,19 +14,41 @@
     <title>Registro diario</title>
     <script>
       // Anti-flash: paints the resolved theme + background palette before
-      // React/IndexedDB load. IndexedDB (Settings.theme/background) stays
-      // the source of truth — this only reads the mirrors useResolvedTheme
-      // (src/hooks/useTheme.ts) and useBackgroundPalette
-      // (src/features/settings/useBackgroundPalette.ts) keep in localStorage
-      // every time the resolved value changes.
+      // React/IndexedDB load. IndexedDB (Settings.theme/background/
+      // customBackgrounds) stays the source of truth — this only reads the
+      // mirrors useResolvedTheme (src/hooks/useTheme.ts) and
+      // useBackgroundPalette (src/features/settings/useBackgroundPalette.ts)
+      // keep in localStorage every time the resolved value changes.
+      //
+      // For a custom background (T4), 'background-custom-mirror' already
+      // holds the fully *resolved* { light, dark } application (background
+      // hex + any readable-text foreground/muted-foreground override) —
+      // precomputed by useBackgroundPalette.ts, never recomputed here, so
+      // this script stays a plain hex-validate-and-apply and never repeats
+      // the OKLCH/WCAG contrast math.
       try {
         var m = localStorage.getItem('theme-mirror')
-        if (m === 'dark' || (m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        var isDark = m === 'dark' || (m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (isDark) {
           document.documentElement.classList.add('dark')
         }
         var bg = localStorage.getItem('background-mirror')
         if (bg) {
           document.documentElement.setAttribute('data-background', bg)
+        }
+        if (bg && bg.indexOf('custom-') === 0) {
+          var HEX_RE = /^#[0-9a-f]{6}$/i
+          var mirror = JSON.parse(localStorage.getItem('background-custom-mirror'))
+          var applied = mirror && (isDark ? mirror.dark : mirror.light)
+          if (applied && HEX_RE.test(applied.backgroundHex)) {
+            document.documentElement.style.setProperty('--background', applied.backgroundHex)
+          }
+          if (applied && applied.foregroundHex && HEX_RE.test(applied.foregroundHex)) {
+            document.documentElement.style.setProperty('--foreground', applied.foregroundHex)
+          }
+          if (applied && applied.mutedForegroundHex && HEX_RE.test(applied.mutedForegroundHex)) {
+            document.documentElement.style.setProperty('--muted-foreground', applied.mutedForegroundHex)
+          }
         }
       } catch (e) {}
     </script>

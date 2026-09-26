@@ -40,8 +40,9 @@ the report generator.
 |---|---|---|
 | `theme` | `light \| dark \| system` | |
 | `ticketedEmoji` | string | default `📱`, see Decisions |
-| `background` | background palette preset id | default `neutral`; presets in `src/features/settings/backgroundPalette.ts` |
+| `background` | preset id or custom background id | default `neutral`; presets in `src/features/settings/backgroundPalette.ts`; a stale/unknown value (e.g. a deleted custom background) falls back to `neutral` at parse time, see Decisions #18 |
 | `userName` | string | trimmed, max 40, default `''`; app-only — shown in-app (Today header greeting), never in the generated report, see Decisions #17 |
+| `customBackgrounds` | `{ id, light, dark }[]` | default `[]`, max 8; `id` is `custom-<uuid>`; `light`/`dark` are lowercase `#rrggbb` hex, background only (no accent), see Decisions #18 |
 
 ## Invariants
 
@@ -119,6 +120,7 @@ value, defaulting to 📱 — see Decisions.
 | 15 | When `N = 0` the summary block is omitted even if untowed entries exist | M1 default | Nothing was towed, so there is nothing to summarize |
 | 16 | Background is a preset palette (`Settings.background`), each preset with a light and a dark variant, applied via `data-background` on `<html>`; presets stay low-chroma so text contrast holds ≥4.5:1 | Confirmed | User decision 2026-09-26 |
 | 17 | `Settings.userName` is app-only: shown in-app (e.g. a Today header greeting), never included in the generated report | Confirmed | User decision 2026-09-26 |
+| 18 | Custom background colors (`Settings.customBackgrounds`): background only (accent out of scope), one light + one dark hex per entry, max 8, deletable; automatic readable text — if the theme's default foreground contrasts <4.5:1 against the chosen background, `--foreground`/`--muted-foreground` are overridden with near-black or near-white (whichever contrasts best), cleared otherwise | Confirmed | User decision 2026-09-26 |
 
 ## Open questions
 

@@ -28,6 +28,7 @@ export const goldenSettings: Settings = {
   // is byte-for-byte unchanged, proving userName never leaks into it
   // (domain.md Decisions #17 — app-only, never in the report).
   userName: 'Damian',
+  customBackgrounds: [],
 }
 
 function entry(overrides: Omit<DailyEntry, 'reportId' | 'denounced' | 'sortKey'> & {

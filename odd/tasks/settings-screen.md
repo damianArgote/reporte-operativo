@@ -33,6 +33,7 @@
 | T1 | Navigation (view state) + settings sections registry + screen shell with back | delegated (writer trigger) | [x] | `9e9ecef` |
 | T2 | Apariencia: theme control moved + background palette (schema, persistence, CSS variables, anti-flash) | delegated (writer trigger) | [x] | `cd0177c` |
 | T3 | Perfil: user name (schema, input, greeting in Today header) + spec update | delegated (writer trigger) | [x] | `b93ed14` |
+| T4 | Custom background colors: user builds colors with `<input type="color">` (one value for light, one for dark), live contrast indicator, automatic black/white text when contrast < 4.5:1, saved next to presets, deletable | delegated (writer trigger) | [ ] | |
 
 ## Progress
 
@@ -57,6 +58,10 @@ All three tasks implemented, strict TDD (RED confirmed before each unit's implem
 
 - `<meta name="theme-color">` was **not** made dynamic per background preset (the brief allowed "leave as is and report"). Kept static (light/dark only) — making it track the resolved preset would need reading the current `data-background` + resolved theme at multiple points (anti-flash script, theme/background change) for a cosmetic browser-chrome detail, out of proportion to this task's scope.
 - CSS presets override only `--background` (the brief said `--card/--popover/--muted` "if needed for coherence"). Not overridden — the app doesn't use Card-heavy surfaces here, and it keeps the CSS/registry surface smaller for a first cut; can be extended per-preset later if a section leans on `--card`/`--popover`.
+
+## Scope change (2026-09-26)
+
+User asked for custom palette colors: background color only (not accent). Added T4.
 
 ## Next step
 
