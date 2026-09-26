@@ -1,0 +1,153 @@
+import { getEntryTypeConfig } from '@/domain/entryTypeRegistry'
+import { computeTowedTotal, computeTypeCounts } from '@/utils/counters'
+import { formatDisplayDate } from '@/utils/dates'
+import type { Block, LineBlock, ReportDocument, Span } from '@/types/document'
+import type { DailyEntry, DailyReport, Settings } from '@/types/schemas'
+
+/**
+ * Single source of truth for report text (report-format.md): pure function
+ * from DailyReport + DailyEntry[] (+ Settings, for the ticketed emoji and
+ * any future per-entry-type settings) to the document model. Both
+ * renderers only ever consume this model.
+ */
+
+function textLine(text: string): LineBlock {
+  return { kind: 'line', spans: [{ kind: 'text', text }] }
+}
+
+function boldLine(text: string): LineBlock {
+  return { kind: 'line', spans: [{ kind: 'bold', children: [{ kind: 'text', text }] }] }
+}
+
+/** Appends " Denuncia." after the formatter output when `denounced` is set — regardless of type. */
+function withDenouncedSuffix(spans: Span[], denounced: boolean): Span[] {
+  if (!denounced) return spans
+
+  const suffix = ' Denuncia.'
+  const lastSpan = spans[spans.length - 1]
+  if (lastSpan?.kind === 'text' && !lastSpan.verbatim) {
+    return [...spans.slice(0, -1), { ...lastSpan, text: lastSpan.text + suffix }]
+  }
+  return [...spans, { kind: 'text', text: suffix }]
+}
+
+function prependNumber(spans: Span[], n: number): Span[] {
+  const prefix = `${n}. `
+  const firstSpan = spans[0]
+  if (firstSpan?.kind === 'text' && !firstSpan.verbatim) {
+    return [{ ...firstSpan, text: prefix + firstSpan.text }, ...spans.slice(1)]
+  }
+  return [{ kind: 'text', text: prefix }, ...spans]
+}
+
+/** Ascending by `time` (HH:mm, lexicographically sortable), then `sortKey`. */
+function byTimeThenSortKey(a: DailyEntry, b: DailyEntry): number {
+  return a.time.localeCompare(b.time) || a.sortKey - b.sortKey
+}
+
+/**
+ * This entry's rendered spans with no number prefix — the same spans
+ * `generateDailyReport` composes for it (formatter output plus the
+ * `denounced` suffix). Exported so any UI showing a single entry's line
+ * (e.g. the Today list) reuses this instead of re-implementing the text.
+ */
+export function renderEntrySpans(entry: DailyEntry, settings: Settings): Span[] {
+  const config = getEntryTypeConfig(entry.type)
+  return withDenouncedSuffix(config.formatter(entry, settings), entry.denounced)
+}
+
+/** `renderEntrySpans` with "N. " prepended, using the same rule `generateDailyReport` uses for towed entries. */
+export function renderNumberedEntrySpans(entry: DailyEntry, settings: Settings, number: number): Span[] {
+  return prependNumber(renderEntrySpans(entry, settings), number)
+}
+
+function renderEntryLine(entry: DailyEntry, settings: Settings): LineBlock {
+  return { kind: 'line', spans: renderEntrySpans(entry, settings) }
+}
+
+function buildHeaderSection(report: DailyReport): Block[] {
+  if (report.header === '') return []
+  // Verbatim, one line block per input line — no reformatting, no bolding.
+  return report.header.split('\n').map(textLine)
+}
+
+/**
+ * Derives each towed entry's report number (1..N) from the same ordering
+ * `generateDailyReport` uses (`byTimeThenSortKey`), keyed by entry id.
+ * Numbers are never persisted (domain.md invariant 1) — any UI that needs
+ * to show "N." next to an entry (e.g. the entry list) must call this
+ * instead of recomputing the ordering itself, so both stay in sync.
+ */
+export function computeTowedNumbering(entries: DailyEntry[]): Map<string, number> {
+  const towed = entries.filter((entry) => entry.towed).sort(byTimeThenSortKey)
+  return new Map(towed.map((entry, index) => [entry.id, index + 1]))
+}
+
+function buildTowedSection(entries: DailyEntry[], settings: Settings): Block[] {
+  const towed = entries.filter((entry) => entry.towed).sort(byTimeThenSortKey)
+  const numbering = computeTowedNumbering(entries)
+  const blocks: Block[] = []
+
+  towed.forEach((entry) => {
+    const line = renderEntryLine(entry, settings)
+    const number = numbering.get(entry.id) ?? 0
+    blocks.push({ kind: 'line', spans: prependNumber(line.spans, number) })
+    // Every towed entry (including the last one) is followed by a blank —
+    // that trailing blank also serves as the separator before the summary.
+    blocks.push({ kind: 'blank' })
+  })
+
+  return blocks
+}
+
+function buildSummarySection(entries: DailyEntry[]): Block[] {
+  const total = computeTowedTotal(entries)
+  if (total === 0) return []
+
+  const lines: Block[] = [boldLine(`Hoy ${total} a playa:`)]
+  for (const typeCount of computeTypeCounts(entries)) {
+    lines.push(textLine(`${typeCount.countedLabel}: ${typeCount.count}`))
+  }
+  return lines
+}
+
+function buildUntowedSection(entries: DailyEntry[], settings: Settings): Block[] {
+  return entries
+    .filter((entry) => !entry.towed && entry.includeInReport)
+    .sort(byTimeThenSortKey)
+    .map((entry) => renderEntryLine(entry, settings))
+}
+
+export function generateDailyReport(
+  report: DailyReport,
+  entries: DailyEntry[],
+  settings: Settings,
+): ReportDocument {
+  const sections: Block[][] = [[boldLine(formatDisplayDate(report.date))]]
+
+  const header = buildHeaderSection(report)
+  if (header.length > 0) sections.push(header)
+
+  const towed = buildTowedSection(entries, settings)
+  if (towed.length > 0) sections.push(towed)
+
+  const summary = buildSummarySection(entries)
+  if (summary.length > 0) sections.push(summary)
+
+  const untowed = buildUntowedSection(entries, settings)
+  if (untowed.length > 0) sections.push(untowed)
+
+  const blocks: Block[] = []
+  sections.forEach((section, index) => {
+    if (index > 0) {
+      const previousSection = sections[index - 1]
+      const previousLast = previousSection?.[previousSection.length - 1]
+      if (previousLast?.kind !== 'blank') {
+        blocks.push({ kind: 'blank' })
+      }
+    }
+    blocks.push(...section)
+  })
+
+  return { blocks }
+}
