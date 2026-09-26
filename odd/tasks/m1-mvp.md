@@ -31,7 +31,7 @@
 | T3 | Persistence: Dexie database, reports/entries/settings repositories with tests | delegated (writer trigger) | [x] | 97b69fe |
 | T4 | Stores: Zustand `reportStore` (persisted data via repositories) and `uiStore` (UI state) with tests | delegated (writer trigger) | [x] | 0742c06 |
 | T5 | Today UI: date header, day header editor, entry list, counters, FAB, add sheet by type, quick free-text, edit/delete/duplicate, preview, rich copy + toast | delegated (writer trigger) | [x] | fae0ea2, 81836e6 |
-| T6 | PWA (manifest, icons, service worker) and dark mode | delegated (writer trigger) | [ ] | |
+| T6 | PWA (manifest, icons, service worker) and dark mode | delegated (writer trigger) | [x] | d4c939f, 2e688c7 |
 
 ## Progress
 
@@ -61,6 +61,53 @@
   `construction` form with `denounced` preset true — see `EntrySheet.tsx`
   doc comment for the golden-fixture evidence this is based on.
 
+- T6 done (d4c939f, 2e688c7):
+  - **T6a dark mode** (d4c939f): Settings.theme (IndexedDB, existing) stays
+    the single source of truth — no `next-themes` (removed, was a second
+    localStorage-based source). New `src/hooks/useTheme.ts`:
+    `resolveTheme`/`applyResolvedTheme` (pure) plus `useResolvedTheme()` (a
+    `useSyncExternalStore`-backed hook tracking `matchMedia` live for
+    "system", applying the `dark` class to `<html>` and mirroring the
+    resolved value to `localStorage['theme-mirror']`), called from both
+    `App.tsx` (whole-app effect) and the rewritten `sonner.tsx` Toaster (so
+    toasts match). New `ThemeToggle` (dropdown, aria-label "Tema",
+    Claro/Oscuro/Sistema) wired into `TodayScreen`'s header, persisting via
+    the existing `reportStore.updateSettings`. `index.html` gained a tiny
+    inline anti-flash script reading the mirror key before paint, plus
+    light/dark `<meta name="theme-color">`. 14 new tests (hook incl. the
+    matchMedia "change" event, Toaster resolved theme, ThemeToggle
+    persistence). Also fixed a pre-existing flaky assertion in
+    `App.test.tsx` (synchronous check right after an unawaited
+    `removeEntry`) that the extra render/hook load from theme wiring made
+    intermittently visible — replaced with `waitFor`.
+  - **T6b PWA** (2e688c7): `vite-plugin-pwa@1.3.0` (current release already
+    supports Vite 8 via `peerDependencies.vite: ^8.0.0` — no downgrade
+    needed). `registerType: 'prompt'`, not `autoUpdate`: an operator can have
+    an unsaved add-entry draft open (in-memory `uiStore` state, not
+    persisted until "Guardar"), and autoUpdate's immediate
+    activate-and-reload could silently drop it; `src/pwa/registerSW.ts`
+    shows a non-invasive "Nueva versión disponible" toast with an
+    "Actualizar" action instead. Icons authored from one `public/icon.svg`
+    source (a simple clipboard/checklist glyph) via
+    `@vite-pwa/assets-generator` — run as a one-off (`npx pwa-assets-generator`,
+    reading the committed `pwa-assets.config.ts`), NOT installed as a
+    project devDependency: it conflicts with vite-plugin-pwa's peerOptional
+    `^1.0.0` range, and forcing it with `--legacy-peer-deps` was observed to
+    silently drop the required `@testing-library/dom` peer, breaking
+    typecheck until reinstalled. Workbox `globPatterns` precache
+    js/css/html/ico/png/svg/woff2; `navigateFallback: 'index.html'`; no
+    runtime caching (no external origins). Manifest fields per spec
+    (name/short_name/description es/lang es/start_url/scope "/" /standalone/
+    portrait/background+theme color matching the light theme/categories
+    productivity). Removed the old default `favicon.svg`. Build: 19 precache
+    entries, 731.48 KiB (3 harmless duplicate entries — vite-plugin-pwa
+    always precaches `manifest.icons` explicitly on top of the glob match;
+    functionally deduped by Workbox at runtime). Verified via
+    `vite preview` + `curl`: `/manifest.webmanifest` and `/sw.js` both serve
+    200 with correct content-type and content; a real offline-in-browser
+    check was out of reach here. `npm run verify` green (151 tests, lint,
+    typecheck, build all clean).
+
 ## Next step
 
-T6.
+M1 complete pending manual device check; decide PR strategy (feature > 400 lines → ask chain strategy).
