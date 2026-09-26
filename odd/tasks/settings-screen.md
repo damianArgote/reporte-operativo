@@ -33,7 +33,7 @@
 | T1 | Navigation (view state) + settings sections registry + screen shell with back | delegated (writer trigger) | [x] | `9e9ecef` |
 | T2 | Apariencia: theme control moved + background palette (schema, persistence, CSS variables, anti-flash) | delegated (writer trigger) | [x] | `cd0177c` |
 | T3 | Perfil: user name (schema, input, greeting in Today header) + spec update | delegated (writer trigger) | [x] | `b93ed14` |
-| T4 | Custom background colors: user builds colors with `<input type="color">` (one value for light, one for dark), live contrast indicator, automatic black/white text when contrast < 4.5:1, saved next to presets, deletable | delegated (writer trigger) | [ ] | |
+| T4 | Custom background colors: user builds colors with `<input type="color">` (one value for light, one for dark), live contrast indicator, automatic black/white text when contrast < 4.5:1, saved next to presets, deletable | delegated (writer trigger) | [x] | `d9376ab`, `3840501` |
 
 ## Progress
 
@@ -63,6 +63,32 @@ All three tasks implemented, strict TDD (RED confirmed before each unit's implem
 
 User asked for custom palette colors: background color only (not accent). Added T4.
 
+**T4 — `d9376ab`, `3840501`**: Strict TDD, RED confirmed per unit then GREEN (color utils, schema, fallback resolution, apply hook incl. theme switch, AppearanceSection create/select/delete flow); two work-unit commits (a preceding refactor, since the diff was large, then the feature).
+
+- `d9376ab` (`refactor(color): extract contrast utilities`): moved the OKLCH/linear-sRGB/relative-luminance/WCAG-contrast math that lived as a test-only helper in `backgroundPalette.test.ts` into `src/utils/color.ts`, with its own tests (`color.test.ts`); `backgroundPalette.test.ts` now imports it — no duplication, no behavior change.
+- `3840501` (`feat(settings): add custom background colors with automatic readable text`):
+  - `Settings.customBackgrounds: { id: 'custom-<uuid>'; light: '#rrggbb'; dark: '#rrggbb' }[]` — Zod `customBackgroundSchema` (lowercase-normalized hex, `custom-<uuid>` id pattern), `.max(8).default([])` on the array.
+  - `Settings.background` loosened from an enum of preset ids to `z.string().min(1).default('neutral')`, so it can also hold a custom background's id. `settingsSchema` is now `settingsShape.transform(...)`: a background that matches neither a preset id nor an existing `customBackgrounds` entry falls back to `'neutral'` at parse time (covered for an old row and for a deleted custom id, in both `schemas.test.ts` and `settings.repository.test.ts`).
+  - `src/utils/color.ts` gained `APP_FOREGROUND_HEX`/`APP_MUTED_FOREGROUND_HEX` (the app's actual `--foreground`/`--muted-foreground` tokens, pre-converted to hex), `resolveReadableForeground(bgHex, defaultFgHex)` (keeps the default when it already contrasts ≥4.5:1, else picks whichever of near-black/near-white — the same two tokens — contrasts best), and `resolveReadableMutedForeground(bgHex, foregroundHex)` (searches the 256 gray levels between bg/fg luminance for the most-muted tone that still clears 4.5:1, relaxing to 3:1 and reporting the shortfall if 4.5 isn't reachable).
+  - `src/features/settings/customBackgrounds.ts` (new, pure): id creation (`crypto.randomUUID()`), preset/custom id discrimination, lookup, `resolveCustomBackgroundApplication(bgHex, theme)` (combines the two color.ts resolvers into one `{ backgroundHex, foregroundHex, mutedForegroundHex }` shape, `null` meaning "no override"), and `resolveEffectiveBackgroundHex(background, customBackgrounds, theme)` (seeds the editor from whatever is currently applied, converting an oklch preset to hex via `oklchToHex`).
+  - `useBackgroundPalette.ts`: a preset selection is unchanged (`data-background` + CSS). A custom selection sets `--background` (and `--foreground`/`--muted-foreground` only when overridden) as inline styles on `<html>`, re-resolving live on every `background`/`customBackgrounds`/resolved-theme change (covered: theme switch while a custom background is selected). Switching back to a preset clears the inline vars. `CUSTOM_BACKGROUND_MIRROR_KEY` (`background-custom-mirror`) mirrors the fully pre-resolved `{ light, dark }` application (not the raw hex pair) to `localStorage`, so `index.html`'s anti-flash script only ever validates and applies plain hex — it never repeats the OKLCH/WCAG math (kept tiny and defensive: try/catch, a hex regex before every `setProperty`). Manually verified with a small scratch script since no test in this repo targets the inline HTML script directly (same as T2's script).
+  - `AppearanceSection.tsx`: custom swatches render after the presets in the same `role="radio"` grid, `aria-label` "Color personalizado N"; the selected one shows a small "×" delete affordance (`aria-label` "Eliminar color personalizado N") that falls the selection back to `'neutral'` when deleted. "Crear color" (hidden past 8 colors, with a note) opens a compact inline editor: two native `<input type="color">` (`Label htmlFor` "Fondo claro"/"Fondo oscuro", defaulting to `resolveEffectiveBackgroundHex` of the current selection), a live preview per color (sample text tinted via `resolveReadableForeground`, "Se lee bien" / "Poco contraste · el texto se ajusta automáticamente"), "Guardar" (adds + selects) / "Cancelar". All new interactive controls are 44px (`h-11`/`size-11`), matching the existing preset swatches/username input.
+  - `docs/specs/domain.md`: `customBackgrounds` row added to the Settings table; Decision #18 (custom background colors, Confirmed).
+
+### Verification evidence (T4)
+
+- `npm run lint` — clean, no output.
+- `npm run typecheck` — clean, no output (two pre-existing `Settings` literals without `customBackgrounds` — `entryTypeRegistry.test.ts`, `golden-2026-09-26.ts` fixture — updated to satisfy the new required field).
+- `npm run test` — `25 test files / 255 tests passed`, run twice back-to-back, both runs identical (255/255).
+- `npm run build` — succeeds; same pre-existing >500kB single-chunk warning as before (not introduced by this change).
+- `npm run verify` — green end-to-end.
+- Impeccable mechanical design detector (`detect.mjs`) run once over `AppearanceSection.tsx` — no findings.
+
+### Deviations from the brief (T4)
+
+- The muted-foreground "suitable mid tone" is resolved by an exhaustive search over the 256 renderable gray levels between the background's and the foreground's own luminance (picking the one closest to the background that still clears the target), rather than a closed-form calculation — deliberate: it guarantees the result is an actual renderable hex value and stays correct at the 3:1 fallback boundary, at the cost of a bounded 256-iteration loop per resolution (cheap, runs only on background/theme change).
+- The anti-flash `index.html` script has no automated test (same as T2's): inline `<script>` content isn't imported by any test file in this repo. Verified manually with a throwaway Node script (not committed) exercising the extracted script body against preset-only, custom-with-override, and malformed-hex-ignored scenarios.
+
 ## Next step
 
-All three tasks are done and `npm run verify` is green. Follow-up ideas (not required by this change): make `<meta theme-color>` reactive per preset; consider tinting `--card`/`--popover` per preset if a future section relies on them.
+All four tasks are done and `npm run verify` is green. Follow-up ideas (not required by this change): make `<meta theme-color>` reactive per preset/custom background; consider tinting `--card`/`--popover` per preset/custom background if a future section relies on them.
