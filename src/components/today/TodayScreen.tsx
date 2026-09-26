@@ -9,6 +9,7 @@ import { EntryList } from './EntryList'
 import { EntrySheet } from './EntrySheet'
 import { PreviewSheet } from './PreviewSheet'
 import { QuickAddBar } from './QuickAddBar'
+import { ThemeToggle } from './ThemeToggle'
 import { useCopyReport } from './useCopyReport'
 
 /**
@@ -31,6 +32,7 @@ export function TodayScreen() {
             <h1 className="text-3xl font-semibold tabular-nums">{formatDisplayDate(dateKey)}</h1>
           </div>
           <div className="flex gap-2 pt-1">
+            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={togglePreview}>
               Vista previa
             </Button>

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react'
+import { render, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { resetDatabase } from '@/db/database'
 import { selectPlainText, useReportStore } from '@/stores/reportStore'
@@ -116,7 +116,12 @@ describe('App — Today screen', () => {
     await user.click(within(secondRow).getByRole('button', { name: /más acciones/i }))
     await user.click(await screen.findByRole('menuitem', { name: 'Eliminar' }))
 
-    expect(screen.queryByText(/BBB222/)).not.toBeInTheDocument()
+    // removeEntry is fire-and-forget from the row menu's onClick (persists,
+    // then reloads entries) — wait for the commit instead of asserting
+    // synchronously right after the click (it may have already committed by
+    // now, so plain waitFor — not waitForElementToBeRemoved, which requires
+    // the element to still be present on its first check).
+    await waitFor(() => expect(screen.queryByText(/BBB222/)).not.toBeInTheDocument())
     expect(await screen.findByText('1. AAA111 un LP en Calle 100.')).toBeInTheDocument()
     expect(await screen.findByText('2. CCC333 un LP en Calle 100.')).toBeInTheDocument()
     expect(screen.getByText(/Hoy 2 a playa/)).toBeInTheDocument()

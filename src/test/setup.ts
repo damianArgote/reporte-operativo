@@ -48,8 +48,10 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
   }
 }
 
-// jsdom doesn't implement matchMedia; next-themes (used by the shadcn/sonner
-// Toaster for its light/dark/system prop) reads it on mount.
+// jsdom doesn't implement matchMedia; useResolvedTheme (src/hooks/useTheme.ts,
+// used by the Toaster and the theme control for its light/dark/system
+// resolution) reads it on mount. Tests that need "system" behavior or the
+// "change" event override this with their own mock.
 if (typeof window !== 'undefined' && !window.matchMedia) {
   window.matchMedia = (query: string): MediaQueryList => ({
     matches: false,

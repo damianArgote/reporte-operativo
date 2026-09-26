@@ -30,7 +30,7 @@
 | T2 | Domain: types, Zod schemas, entry-type registry, date utils, counters, `generateDailyReport` + `renderWhatsAppText` + `renderHtml` (golden and derived tests) | delegated (writer trigger) | [x] | d6fcf22 |
 | T3 | Persistence: Dexie database, reports/entries/settings repositories with tests | delegated (writer trigger) | [x] | 97b69fe |
 | T4 | Stores: Zustand `reportStore` (persisted data via repositories) and `uiStore` (UI state) with tests | delegated (writer trigger) | [x] | 0742c06 |
-| T5 | Today UI: date header, day header editor, entry list, counters, FAB, add sheet by type, quick free-text, edit/delete/duplicate, preview, rich copy + toast | delegated (writer trigger) | [ ] | |
+| T5 | Today UI: date header, day header editor, entry list, counters, FAB, add sheet by type, quick free-text, edit/delete/duplicate, preview, rich copy + toast | delegated (writer trigger) | [x] | fae0ea2, 81836e6 |
 | T6 | PWA (manifest, icons, service worker) and dark mode | delegated (writer trigger) | [ ] | |
 
 ## Progress
@@ -39,7 +39,28 @@
 - T2 done (d6fcf22): pure domain layer (types/schemas/registry/dates/counters/generator/renderers), 79 tests green, `npm run verify` clean; two spec gaps found and resolved per golden fixture (see commit).
 - T3 done (97b69fe): Dexie database (`src/db/database.ts`) plus reports/entries/settings repositories, all validating with the T2 Zod schemas on read and write; 25 new tests green (CRUD, idempotent `getOrCreateByDate`, normalization on write, duplicate ordering, cross-instance persistence), `npm run verify` clean.
 - T4 done (0742c06): `reportStore` (Zustand, repository-backed, injectable deps for tests) and `uiStore` (UI-only state), plus derived selectors/hooks (`selectDocument`/`useReportDocument`, `selectPlainText`/`usePlainText`, `selectHtml`/`useHtml`, `selectCounters`/`useCounters`) memoized via `useShallow`+`useMemo`; 12 new tests green (load, mutate+reload+renumber, header/settings propagation, error status, uiStore transitions), `npm run verify` clean.
+- T5 done (fae0ea2, 81836e6): Today screen — sticky date/"Hoy" header with
+  editable day-header textarea, quiet-when-zero counters strip, scrollable
+  entry timeline (derived "N." via new `computeTowedNumbering`/
+  `renderEntrySpans`/`renderNumberedEntrySpans` exports, so the row reuses
+  the generator's own formatter/denounced/number logic), row menu
+  (Editar/Duplicar/Eliminar with undo-via-toast delete backed by a new
+  `entries.repository.restore()`/`reportStore.restoreEntry()`), pinned
+  quick free-text bar, FAB → two-step add sheet (type grid incl. a
+  "Denuncia" tile, then per-type fields/toggles/time; same form reused for
+  edit), "Vista previa" sheet rendering the `ReportDocument` model as React
+  elements (no `dangerouslySetInnerHTML`), and "Copiar" wired to the new
+  `services/clipboard.ts` (`ClipboardItem` with a `writeText` fallback) with
+  a "✓ Copiado" toast. `App.tsx` now calls `load()` on mount with
+  loading/error states and mounts `<Toaster/>`. 7 new integration tests
+  (real store + fake-indexeddb) covering the full T5 acceptance list, plus
+  10 new domain/store unit tests (numbering helpers, restore/undo, uiStore
+  preset); 136 tests total green, `npm run verify` clean (build: ~602 kB JS /
+  189 kB gzip, one chunk-size warning, no code-splitting configured yet).
+  Spec ambiguity resolved: "Denuncia" tile opens the
+  `construction` form with `denounced` preset true — see `EntrySheet.tsx`
+  doc comment for the golden-fixture evidence this is based on.
 
 ## Next step
 
-T5.
+T6.
