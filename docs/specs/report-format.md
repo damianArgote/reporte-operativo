@@ -8,7 +8,7 @@ touching `services/reportGenerator`, `services/renderers`, or `types/`.
 
 ```ts
 type Span =
-  | { kind: 'text'; text: string }
+  | { kind: 'text'; text: string; verbatim?: boolean } // verbatim: user free text (rawText/header); only renderHtml parses its WhatsApp markup
   | { kind: 'bold'; children: Span[] }
   | { kind: 'italic'; children: Span[] }
   | { kind: 'strike'; children: Span[] }
@@ -22,8 +22,9 @@ interface ReportDocument {
   blocks: Block[];
 }
 
-// Single source of truth. Pure function: DailyReport + DailyEntry[] -> doc model.
-declare function generateDailyReport(report: DailyReport, entries: DailyEntry[]): ReportDocument;
+// Single source of truth. Pure function: DailyReport + DailyEntry[] + Settings -> doc model.
+// Settings is needed for configurable output such as the ticketed emoji.
+declare function generateDailyReport(report: DailyReport, entries: DailyEntry[], settings: Settings): ReportDocument;
 
 // Pure renderers consume the doc model only. Neither one re-derives report data.
 declare function renderWhatsAppText(doc: ReportDocument): string; // text/plain, WhatsApp markup
@@ -32,6 +33,9 @@ declare function renderHtml(doc: ReportDocument): string;         // text/html, 
 
 Emojis (e.g. 📱) are plain Unicode characters inside `text` spans — not a
 separate span kind.
+
+When an entry has `observation`, every structured type (lp, mi, construction,
+ticketed) appends ` {observation}` after its base sentence.
 
 ## Section order
 
