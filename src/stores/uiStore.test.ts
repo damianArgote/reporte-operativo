@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { useUiStore } from './uiStore'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { initNavigationSync, useUiStore } from './uiStore'
 
 const initialState = useUiStore.getInitialState()
 
@@ -66,6 +66,71 @@ describe('uiStore', () => {
       expect(useUiStore.getState().previewOpen).toBe(true)
       useUiStore.getState().togglePreview()
       expect(useUiStore.getState().previewOpen).toBe(false)
+    })
+  })
+
+  describe('navigate (view + location.hash sync)', () => {
+    afterEach(() => {
+      window.history.replaceState(null, '', '/')
+    })
+
+    it('starts on "today" for a plain URL with no hash', () => {
+      expect(useUiStore.getState().view).toBe('today')
+    })
+
+    it('navigate("settings") switches the view and pushes the #/settings hash', () => {
+      useUiStore.getState().navigate('settings')
+      expect(useUiStore.getState().view).toBe('settings')
+      expect(window.location.hash).toBe('#/settings')
+    })
+
+    it('navigate("today") switches the view back and clears the hash', () => {
+      useUiStore.getState().navigate('settings')
+      useUiStore.getState().navigate('today')
+      expect(useUiStore.getState().view).toBe('today')
+      expect(window.location.hash).toBe('')
+    })
+
+    it('syncViewFromLocation re-reads location.hash — what the browser/Android back button ends up triggering', () => {
+      useUiStore.getState().navigate('settings')
+      // Simulates the URL having already changed (e.g. the back button
+      // popped the pushed entry) before the app reacts to it.
+      window.location.hash = ''
+      useUiStore.getState().syncViewFromLocation()
+      expect(useUiStore.getState().view).toBe('today')
+    })
+  })
+
+  describe('initNavigationSync', () => {
+    afterEach(() => {
+      window.history.replaceState(null, '', '/')
+    })
+
+    it('syncs the view whenever a hashchange event fires (browser/Android back or forward)', () => {
+      const cleanup = initNavigationSync()
+      try {
+        useUiStore.getState().navigate('settings')
+
+        window.location.hash = ''
+        window.dispatchEvent(new Event('hashchange'))
+
+        expect(useUiStore.getState().view).toBe('today')
+      } finally {
+        cleanup()
+      }
+    })
+
+    it('returns a cleanup function that stops listening', () => {
+      const cleanup = initNavigationSync()
+      cleanup()
+
+      useUiStore.getState().navigate('settings')
+      window.location.hash = ''
+      window.dispatchEvent(new Event('hashchange'))
+
+      // No listener left to react — the store still reflects the last
+      // explicit navigate() call, not the hash.
+      expect(useUiStore.getState().view).toBe('settings')
     })
   })
 })
