@@ -20,7 +20,10 @@ import { DEFAULT_SETTINGS, type DailyEntry, type DailyReport, type Settings } fr
 
 export interface ReportStoreDeps {
   reports: Pick<typeof reportsRepository, 'getOrCreateByDate' | 'updateHeader'>
-  entries: Pick<typeof entriesRepository, 'listByReport' | 'create' | 'update' | 'remove' | 'duplicate'>
+  entries: Pick<
+    typeof entriesRepository,
+    'listByReport' | 'create' | 'update' | 'remove' | 'duplicate' | 'restore'
+  >
   settings: Pick<typeof settingsRepository, 'get' | 'update'>
 }
 
@@ -47,6 +50,8 @@ export interface ReportStoreState {
   updateEntry: (id: string, patch: entriesRepository.UpdateEntryPatch) => Promise<void>
   removeEntry: (id: string) => Promise<void>
   duplicateEntry: (id: string) => Promise<void>
+  /** Undo for `removeEntry` — re-adds `entry` with its exact original data (id/time/sortKey kept). */
+  restoreEntry: (entry: DailyEntry) => Promise<void>
   updateHeader: (text: string) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
 }
@@ -100,6 +105,8 @@ export function createReportStore(deps: ReportStoreDeps = defaultDeps) {
       removeEntry: (id) => withReport(() => deps.entries.remove(id)),
 
       duplicateEntry: (id) => withReport(() => deps.entries.duplicate(id).then(() => {})),
+
+      restoreEntry: (entry) => withReport(() => deps.entries.restore(entry).then(() => {})),
 
       updateHeader: async (text) => {
         const { report } = get()

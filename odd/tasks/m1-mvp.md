@@ -28,8 +28,8 @@
 |---|---|---|---|---|
 | T1 | Scaffold: Vite react-ts at repo root, strict TS, Tailwind v4, shadcn/ui, ESLint, Vitest + Testing Library + fake-indexeddb, scripts incl. `verify` | delegated (writer trigger: 2+ non-trivial files) | [x] | 19b94ce |
 | T2 | Domain: types, Zod schemas, entry-type registry, date utils, counters, `generateDailyReport` + `renderWhatsAppText` + `renderHtml` (golden and derived tests) | delegated (writer trigger) | [x] | d6fcf22 |
-| T3 | Persistence: Dexie database, reports/entries/settings repositories with tests | delegated (writer trigger) | [ ] | |
-| T4 | Stores: Zustand `reportStore` (persisted data via repositories) and `uiStore` (UI state) with tests | delegated (writer trigger) | [ ] | |
+| T3 | Persistence: Dexie database, reports/entries/settings repositories with tests | delegated (writer trigger) | [x] | 97b69fe |
+| T4 | Stores: Zustand `reportStore` (persisted data via repositories) and `uiStore` (UI state) with tests | delegated (writer trigger) | [x] | 0742c06 |
 | T5 | Today UI: date header, day header editor, entry list, counters, FAB, add sheet by type, quick free-text, edit/delete/duplicate, preview, rich copy + toast | delegated (writer trigger) | [ ] | |
 | T6 | PWA (manifest, icons, service worker) and dark mode | delegated (writer trigger) | [ ] | |
 
@@ -37,7 +37,9 @@
 
 - Specs confirmed by the user on 2026-09-26 (decisions 1–12); decisions 13–15 are M1 defaults.
 - T2 done (d6fcf22): pure domain layer (types/schemas/registry/dates/counters/generator/renderers), 79 tests green, `npm run verify` clean; two spec gaps found and resolved per golden fixture (see commit).
+- T3 done (97b69fe): Dexie database (`src/db/database.ts`) plus reports/entries/settings repositories, all validating with the T2 Zod schemas on read and write; 25 new tests green (CRUD, idempotent `getOrCreateByDate`, normalization on write, duplicate ordering, cross-instance persistence), `npm run verify` clean.
+- T4 done (0742c06): `reportStore` (Zustand, repository-backed, injectable deps for tests) and `uiStore` (UI-only state), plus derived selectors/hooks (`selectDocument`/`useReportDocument`, `selectPlainText`/`usePlainText`, `selectHtml`/`useHtml`, `selectCounters`/`useCounters`) memoized via `useShallow`+`useMemo`; 12 new tests green (load, mutate+reload+renumber, header/settings propagation, error status, uiStore transitions), `npm run verify` clean.
 
 ## Next step
 
-T1.
+T5.

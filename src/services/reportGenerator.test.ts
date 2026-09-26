@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { DailyEntry, DailyReport, Settings } from '@/types/schemas'
 import { DEFAULT_SETTINGS } from '@/types/schemas'
 import { renderHtml, renderWhatsAppText } from './renderers'
-import { generateDailyReport } from './reportGenerator'
+import { computeTowedNumbering, generateDailyReport } from './reportGenerator'
 import {
   GOLDEN_EXPECTED_WHATSAPP_TEXT,
   goldenEntries,
@@ -143,5 +143,33 @@ describe('generateDailyReport — derived Given/When/Then cases (report-format.m
       const nextIsBlank = doc.blocks[i + 1]?.kind === 'blank'
       expect(blockIsBlank && nextIsBlank).toBe(false)
     }
+  })
+})
+
+describe('computeTowedNumbering', () => {
+  it('assigns 1..N in the same time+sortKey order the generator uses, ignoring untowed entries', () => {
+    const numbering = computeTowedNumbering(goldenEntries)
+
+    expect(numbering.get('entry-1605-lp')).toBe(1)
+    expect(numbering.get('entry-1653-lp')).toBe(2)
+    expect(numbering.get('entry-1744-construction-towed')).toBe(3)
+    expect(numbering.get('entry-1831-lp')).toBe(4)
+    expect(numbering.get('entry-2030-lp')).toBe(5)
+    expect(numbering.get('entry-2122-mi')).toBe(6)
+    // Untowed entries never receive a number.
+    expect(numbering.has('entry-1633-ticketed')).toBe(false)
+  })
+
+  it('renumbers 1..N-1 when a towed entry is removed, matching generateDailyReport', () => {
+    const withoutEntry3 = goldenEntries.filter((e) => e.id !== 'entry-1744-construction-towed')
+    const numbering = computeTowedNumbering(withoutEntry3)
+
+    expect(numbering.get('entry-1831-lp')).toBe(3)
+    expect(numbering.get('entry-2030-lp')).toBe(4)
+    expect(numbering.get('entry-2122-mi')).toBe(5)
+  })
+
+  it('returns an empty map when there are no towed entries', () => {
+    expect(computeTowedNumbering([]).size).toBe(0)
   })
 })

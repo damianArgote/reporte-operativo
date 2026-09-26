@@ -57,13 +57,27 @@ function buildHeaderSection(report: DailyReport): Block[] {
   return report.header.split('\n').map(textLine)
 }
 
+/**
+ * Derives each towed entry's report number (1..N) from the same ordering
+ * `generateDailyReport` uses (`byTimeThenSortKey`), keyed by entry id.
+ * Numbers are never persisted (domain.md invariant 1) — any UI that needs
+ * to show "N." next to an entry (e.g. the entry list) must call this
+ * instead of recomputing the ordering itself, so both stay in sync.
+ */
+export function computeTowedNumbering(entries: DailyEntry[]): Map<string, number> {
+  const towed = entries.filter((entry) => entry.towed).sort(byTimeThenSortKey)
+  return new Map(towed.map((entry, index) => [entry.id, index + 1]))
+}
+
 function buildTowedSection(entries: DailyEntry[], settings: Settings): Block[] {
   const towed = entries.filter((entry) => entry.towed).sort(byTimeThenSortKey)
+  const numbering = computeTowedNumbering(entries)
   const blocks: Block[] = []
 
-  towed.forEach((entry, index) => {
+  towed.forEach((entry) => {
     const line = renderEntryLine(entry, settings)
-    blocks.push({ kind: 'line', spans: prependNumber(line.spans, index + 1) })
+    const number = numbering.get(entry.id) ?? 0
+    blocks.push({ kind: 'line', spans: prependNumber(line.spans, number) })
     // Every towed entry (including the last one) is followed by a blank —
     // that trailing blank also serves as the separator before the summary.
     blocks.push({ kind: 'blank' })

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resetDatabase } from './database'
 import { getOrCreateByDate } from './reports.repository'
-import { create, duplicate, listByReport, remove, update } from './entries.repository'
+import { create, duplicate, listByReport, remove, restore, update } from './entries.repository'
 
 describe('entries.repository', () => {
   let reportId: string
@@ -89,6 +89,28 @@ describe('entries.repository', () => {
       const entry = await create({ reportId, type: 'free', rawText: 'x' })
       await remove(entry.id)
       expect(await listByReport(reportId)).toEqual([])
+    })
+  })
+
+  describe('restore', () => {
+    it('re-adds a previously removed entry with its exact original data (undo)', async () => {
+      const entry = await create({
+        reportId,
+        type: 'lp',
+        time: '11:15',
+        fields: { plate: 'AAA111', street: 'Calle', addressNumber: '100' },
+      })
+      await remove(entry.id)
+      expect(await listByReport(reportId)).toEqual([])
+
+      const restored = await restore(entry)
+
+      expect(restored).toEqual(entry)
+      expect(await listByReport(reportId)).toEqual([entry])
+    })
+
+    it('rejects a corrupt entry payload', async () => {
+      await expect(restore({ id: 'x' } as never)).rejects.toThrow()
     })
   })
 

@@ -112,6 +112,20 @@ export async function remove(id: string): Promise<void> {
   await getDatabase().entries.delete(id)
 }
 
+/**
+ * Re-adds a previously removed entry with its exact original data — the
+ * undo path for `remove()` (e.g. a "Deshacer" toast action). Unlike
+ * `create()`, this never generates new ids/timestamps/sortKey: it persists
+ * `entry` as given (still schema-validated) so the entry reappears exactly
+ * where it was, keeping any derived numbering stable.
+ */
+export async function restore(entry: DailyEntry): Promise<DailyEntry> {
+  const db = getDatabase()
+  const validated = parseEntry(entry)
+  await db.entries.add(validated)
+  return validated
+}
+
 export async function duplicate(id: string): Promise<DailyEntry> {
   const db = getDatabase()
   const existing = await db.entries.get(id)

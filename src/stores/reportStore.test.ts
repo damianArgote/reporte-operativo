@@ -101,6 +101,22 @@ describe('reportStore', () => {
     })
   })
 
+  describe('restoreEntry', () => {
+    it('re-adds a removed entry with its exact original data (undo)', async () => {
+      const store = createReportStore(realDeps())
+      await store.getState().load('2026-09-26')
+
+      await store.getState().addEntry(lpInput('AAA111', '08:00'))
+      const removed = store.getState().entries[0]!
+      await store.getState().removeEntry(removed.id)
+      expect(store.getState().entries).toEqual([])
+
+      await store.getState().restoreEntry(removed)
+
+      expect(store.getState().entries).toEqual([removed])
+    })
+  })
+
   describe('updateHeader', () => {
     it('updates the report header, reflected in the derived text', async () => {
       const store = createReportStore(realDeps())
