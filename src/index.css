@@ -128,3 +128,29 @@
     @apply font-sans;
     }
 }
+
+/*
+ * Background palette presets (T2, docs/specs/domain.md Settings table):
+ * `data-background` is set on <html> by useBackgroundPalette.ts (and, before
+ * first paint, index.html's inline anti-flash script) from Settings.background.
+ * Only `--background` is overridden — keep these values in sync with
+ * src/features/settings/backgroundPalette.ts (BACKGROUND_PALETTES); its own
+ * test asserts every value here keeps ≥4.5:1 contrast against --foreground.
+ */
+[data-background="neutral"] { --background: oklch(1 0 0); }
+.dark[data-background="neutral"] { --background: oklch(0.145 0 0); }
+
+[data-background="arena"] { --background: oklch(0.96 0.015 75); }
+.dark[data-background="arena"] { --background: oklch(0.2 0.02 70); }
+
+[data-background="salvia"] { --background: oklch(0.96 0.02 145); }
+.dark[data-background="salvia"] { --background: oklch(0.19 0.025 150); }
+
+[data-background="niebla"] { --background: oklch(0.96 0.012 240); }
+.dark[data-background="niebla"] { --background: oklch(0.19 0.02 235); }
+
+[data-background="lavanda"] { --background: oklch(0.96 0.02 300); }
+.dark[data-background="lavanda"] { --background: oklch(0.2 0.025 300); }
+
+[data-background="piedra"] { --background: oklch(0.95 0.008 60); }
+.dark[data-background="piedra"] { --background: oklch(0.21 0.01 60); }

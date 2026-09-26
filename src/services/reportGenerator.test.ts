@@ -22,6 +22,19 @@ describe('generateDailyReport — golden fixture golden-2026-09-26', () => {
   })
 })
 
+describe('generateDailyReport — Settings.userName never leaks into the report (T3, domain.md Decisions #17)', () => {
+  it('renderWhatsAppText is byte-for-byte identical whether userName is set or empty', () => {
+    const withName = generateDailyReport(goldenReport, goldenEntries, {
+      ...goldenSettings,
+      userName: 'Cualquier Nombre',
+    })
+    const withoutName = generateDailyReport(goldenReport, goldenEntries, { ...goldenSettings, userName: '' })
+
+    expect(renderWhatsAppText(withName)).toBe(renderWhatsAppText(withoutName))
+    expect(renderWhatsAppText(withName)).toBe(GOLDEN_EXPECTED_WHATSAPP_TEXT)
+  })
+})
+
 describe('generateDailyReport — derived Given/When/Then cases (report-format.md)', () => {
   it('deleting a towed entry renumbers 1..N-1 and drops its type from the summary if it hits zero', () => {
     const entriesWithoutEntry3 = goldenEntries.filter((e) => e.id !== 'entry-1744-construction-towed')

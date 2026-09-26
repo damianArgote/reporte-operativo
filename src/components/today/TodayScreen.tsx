@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useReportStore } from '@/stores/reportStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -9,7 +9,6 @@ import { EntryList } from './EntryList'
 import { EntrySheet } from './EntrySheet'
 import { PreviewSheet } from './PreviewSheet'
 import { QuickAddBar } from './QuickAddBar'
-import { ThemeToggle } from './ThemeToggle'
 import { useCopyReport } from './useCopyReport'
 
 /**
@@ -19,8 +18,10 @@ import { useCopyReport } from './useCopyReport'
  */
 export function TodayScreen() {
   const dateKey = useReportStore((state) => state.dateKey ?? todayKey())
+  const userName = useReportStore((state) => state.settings.userName)
   const togglePreview = useUiStore((state) => state.togglePreview)
   const openAddSheet = useUiStore((state) => state.openAddSheet)
+  const navigate = useUiStore((state) => state.navigate)
   const copy = useCopyReport()
 
   return (
@@ -30,9 +31,18 @@ export function TodayScreen() {
           <div>
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Hoy</p>
             <h1 className="text-3xl font-semibold tabular-nums">{formatDisplayDate(dateKey)}</h1>
+            {userName && <p className="text-sm text-muted-foreground">Hola, {userName}</p>}
           </div>
           <div className="flex gap-2 pt-1">
-            <ThemeToggle />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Configuración"
+              onClick={() => navigate('settings')}
+              className="size-11"
+            >
+              <Settings className="size-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={togglePreview}>
               Vista previa
             </Button>

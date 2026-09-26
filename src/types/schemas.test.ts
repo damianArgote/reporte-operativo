@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_SETTINGS,
+  customBackgroundSchema,
   dailyEntrySchema,
   dailyReportSchema,
   entryFieldsSchema,
@@ -97,9 +98,39 @@ describe('dailyReportSchema', () => {
   })
 })
 
+describe('customBackgroundSchema', () => {
+  const valid = { id: 'custom-11111111-1111-4111-8111-111111111111', light: '#fafafa', dark: '#222222' }
+
+  it('parses a valid custom background', () => {
+    expect(customBackgroundSchema.parse(valid)).toEqual(valid)
+  })
+
+  it('lowercase-normalizes uppercase hex values', () => {
+    const parsed = customBackgroundSchema.parse({ ...valid, light: '#FAFAFA', dark: '#ABCDEF' })
+    expect(parsed.light).toBe('#fafafa')
+    expect(parsed.dark).toBe('#abcdef')
+  })
+
+  it('rejects a malformed hex value', () => {
+    expect(() => customBackgroundSchema.parse({ ...valid, light: 'fafafa' })).toThrow()
+    expect(() => customBackgroundSchema.parse({ ...valid, dark: '#fff' })).toThrow()
+  })
+
+  it('rejects an id that is not "custom-<uuid>"', () => {
+    expect(() => customBackgroundSchema.parse({ ...valid, id: 'arena' })).toThrow()
+    expect(() => customBackgroundSchema.parse({ ...valid, id: 'custom-not-a-uuid' })).toThrow()
+  })
+})
+
 describe('settingsSchema', () => {
   it('parses valid settings', () => {
-    const settings = { theme: 'dark', ticketedEmoji: '📱' }
+    const settings = {
+      theme: 'dark',
+      ticketedEmoji: '📱',
+      background: 'arena',
+      userName: 'Damian',
+      customBackgrounds: [],
+    }
     expect(settingsSchema.parse(settings)).toEqual(settings)
   })
 
@@ -111,8 +142,93 @@ describe('settingsSchema', () => {
     expect(() => settingsSchema.parse({ theme: 'system', ticketedEmoji: '' })).toThrow()
   })
 
+  it('defaults background to "neutral" when missing — an old row saved before this field existed', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱' })
+    expect(parsed.background).toBe('neutral')
+  })
+
+  it('falls back an unknown/stale background preset id to "neutral" at parse time', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', background: 'bogus' })
+    expect(parsed.background).toBe('neutral')
+  })
+
+  it('defaults customBackgrounds to [] when missing — an old row saved before this field existed', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱' })
+    expect(parsed.customBackgrounds).toEqual([])
+  })
+
+  it('accepts a background that matches an existing custom background id', () => {
+    const customBackgrounds = [
+      { id: 'custom-11111111-1111-4111-8111-111111111111', light: '#fafafa', dark: '#222222' },
+    ]
+    const parsed = settingsSchema.parse({
+      theme: 'system',
+      ticketedEmoji: '📱',
+      background: 'custom-11111111-1111-4111-8111-111111111111',
+      customBackgrounds,
+    })
+    expect(parsed.background).toBe('custom-11111111-1111-4111-8111-111111111111')
+  })
+
+  it('falls back to "neutral" when background points at a custom id that has since been deleted', () => {
+    const parsed = settingsSchema.parse({
+      theme: 'system',
+      ticketedEmoji: '📱',
+      background: 'custom-99999999-9999-4999-8999-999999999999',
+      customBackgrounds: [],
+    })
+    expect(parsed.background).toBe('neutral')
+  })
+
+  it('rejects more than 8 custom backgrounds', () => {
+    const customBackgrounds = Array.from({ length: 9 }, (_, i) => ({
+      id: `custom-${String(i).padStart(8, '0')}-1111-4111-8111-111111111111`,
+      light: '#fafafa',
+      dark: '#222222',
+    }))
+    expect(() => settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', customBackgrounds })).toThrow()
+  })
+
+  it('accepts exactly 8 custom backgrounds', () => {
+    const customBackgrounds = Array.from({ length: 8 }, (_, i) => ({
+      id: `custom-${String(i).padStart(8, '0')}-1111-4111-8111-111111111111`,
+      light: '#fafafa',
+      dark: '#222222',
+    }))
+    expect(
+      settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', customBackgrounds }).customBackgrounds,
+    ).toHaveLength(8)
+  })
+
+  it('defaults userName to "" when missing — an old row saved before this field existed', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱' })
+    expect(parsed.userName).toBe('')
+  })
+
+  it('trims userName', () => {
+    const parsed = settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName: '  Damian  ' })
+    expect(parsed.userName).toBe('Damian')
+  })
+
+  it('rejects a userName longer than 40 characters', () => {
+    expect(() =>
+      settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName: 'a'.repeat(41) }),
+    ).toThrow()
+  })
+
+  it('accepts a userName of exactly 40 characters', () => {
+    const userName = 'a'.repeat(40)
+    expect(settingsSchema.parse({ theme: 'system', ticketedEmoji: '📱', userName }).userName).toBe(userName)
+  })
+
   it('exposes a default settings constant matching the schema', () => {
-    expect(DEFAULT_SETTINGS).toEqual({ theme: 'system', ticketedEmoji: '📱' })
+    expect(DEFAULT_SETTINGS).toEqual({
+      theme: 'system',
+      ticketedEmoji: '📱',
+      background: 'neutral',
+      userName: '',
+      customBackgrounds: [],
+    })
     expect(() => settingsSchema.parse(DEFAULT_SETTINGS)).not.toThrow()
   })
 })

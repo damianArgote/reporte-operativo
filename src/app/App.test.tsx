@@ -188,4 +188,29 @@ describe('App — Today screen', () => {
     expect(plainText).toBe(expected)
     expect(await screen.findByText(/copiado/i)).toBeInTheDocument()
   })
+
+  it('"Configuración" opens the settings screen; "Volver" returns to Today', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText(formatDisplayDate(todayKey()))
+
+    await user.click(screen.getByRole('button', { name: 'Configuración' }))
+
+    expect(await screen.findByRole('heading', { name: 'Configuración' })).toBeInTheDocument()
+    expect(screen.queryByText(formatDisplayDate(todayKey()))).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Volver' }))
+
+    expect(await screen.findByText(formatDisplayDate(todayKey()))).toBeInTheDocument()
+  })
+
+  it('shows "Hola, {nombre}" in the Today header once Settings.userName is set', async () => {
+    render(<App />)
+    await screen.findByText(formatDisplayDate(todayKey()))
+    expect(screen.queryByText(/^Hola,/)).not.toBeInTheDocument()
+
+    await useReportStore.getState().updateSettings({ userName: 'Damian' })
+
+    expect(await screen.findByText('Hola, Damian')).toBeInTheDocument()
+  })
 })

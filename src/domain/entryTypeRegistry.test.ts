@@ -133,6 +133,9 @@ describe('formatters', () => {
     const spans = getEntryTypeConfig('ticketed').formatter(entry, {
       theme: 'system',
       ticketedEmoji: '🅿️',
+      background: 'neutral',
+      userName: '',
+      customBackgrounds: [],
     })
     expect(text(spans)).toBe('MEY521 un 6490/🅿️ Infraccionado.')
   })
