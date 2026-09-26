@@ -137,16 +137,21 @@ export function AppearanceSection() {
           className="grid grid-cols-3 gap-2"
         >
           {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-            <div
+            <Label
               key={value}
-              className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border px-2"
+              htmlFor={`theme-${value}`}
+              className="relative flex h-11 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-1 text-sm has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-data-[state=checked]:border-foreground has-data-[state=checked]:bg-muted"
             >
-              <RadioGroupItem id={`theme-${value}`} value={value} className="sr-only" />
-              <Label htmlFor={`theme-${value}`} className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 text-sm">
-                <Icon className="size-4" />
-                {label}
-              </Label>
-            </div>
+              {/* The whole tile is the hit target; the radio itself only keeps
+                  keyboard and screen-reader semantics. */}
+              <RadioGroupItem
+                id={`theme-${value}`}
+                value={value}
+                className="pointer-events-none absolute size-px border-0 opacity-0"
+              />
+              <Icon className="size-4 shrink-0" />
+              <span className="truncate">{label}</span>
+            </Label>
           ))}
         </RadioGroup>
       </div>

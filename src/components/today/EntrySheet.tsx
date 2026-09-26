@@ -34,7 +34,7 @@ const TYPE_TILES: Array<{ key: string; typeId: EntryTypeId; label: string; denou
 
 function TypeGrid({ onSelect }: { onSelect: (typeId: EntryTypeId, denouncedPreset: boolean) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-3 py-2">
+    <div className="grid grid-cols-2 gap-3 py-2 min-[360px]:grid-cols-3">
       {TYPE_TILES.map((tile) => {
         // Resolved dynamically per tile — rendered via createElement (not a
         // JSX tag) since it isn't a statically-known component reference.
@@ -47,7 +47,7 @@ function TypeGrid({ onSelect }: { onSelect: (typeId: EntryTypeId, denouncedPrese
             key={tile.key}
             type="button"
             onClick={() => onSelect(tile.typeId, tile.denouncedPreset ?? false)}
-            className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl border border-border p-2 text-sm font-medium transition-colors hover:bg-muted active:bg-muted"
+            className="flex min-h-20 min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border p-2 text-center text-sm font-medium transition-colors hover:bg-muted active:bg-muted"
           >
             {icon}
             {tile.label}
@@ -114,7 +114,7 @@ export function EntrySheet() {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl">
+      <SheetContent side="bottom" className="mx-auto max-h-[90svh] w-full max-w-md overflow-y-auto rounded-t-2xl">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>

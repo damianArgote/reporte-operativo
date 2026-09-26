@@ -58,11 +58,11 @@ export function EntryRow({ entry, number, settings }: EntryRowProps) {
       <button
         type="button"
         onClick={() => startEdit(entry.id)}
-        className="flex min-h-11 flex-1 items-start gap-2 rounded-md text-left"
+        className="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-md text-left"
         aria-label={`Editar registro de las ${entry.time}`}
       >
         {icon}
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <span className="tabular-nums">{entry.time}</span>
             <span>·</span>
@@ -78,7 +78,7 @@ export function EntryRow({ entry, number, settings }: EntryRowProps) {
               </Badge>
             )}
           </div>
-          <p className="text-sm">{renderSpans(spans)}</p>
+          <p className="text-sm wrap-break-word whitespace-pre-wrap">{renderSpans(spans)}</p>
         </div>
       </button>
 
