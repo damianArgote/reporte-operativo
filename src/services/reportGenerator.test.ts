@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import type { DailyEntry, DailyReport, Settings } from '@/types/schemas'
 import { DEFAULT_SETTINGS } from '@/types/schemas'
 import { renderHtml, renderWhatsAppText } from './renderers'
-import { computeTowedNumbering, generateDailyReport } from './reportGenerator'
+import {
+  computeTowedNumbering,
+  generateDailyReport,
+  renderEntrySpans,
+  renderNumberedEntrySpans,
+} from './reportGenerator'
 import {
   GOLDEN_EXPECTED_WHATSAPP_TEXT,
   goldenEntries,
@@ -171,5 +176,24 @@ describe('computeTowedNumbering', () => {
 
   it('returns an empty map when there are no towed entries', () => {
     expect(computeTowedNumbering([]).size).toBe(0)
+  })
+})
+
+describe('renderEntrySpans / renderNumberedEntrySpans (single-entry rendering, no number prefix)', () => {
+  it('renders the same spans generateDailyReport uses for that entry, including the denounced suffix', () => {
+    const denounced = goldenEntries.find((e) => e.id === 'entry-1744-construction-towed')!
+    const spans = renderEntrySpans(denounced, goldenSettings)
+    expect(spans).toEqual([
+      {
+        kind: 'text',
+        text: 'KMB728 Volkswagen TENIENTE BENJAMIN MATIENZO 1745 Obra en construccion. Denuncia.',
+      },
+    ])
+  })
+
+  it('renderNumberedEntrySpans prepends "N. " using the same rule generateDailyReport uses', () => {
+    const entry = goldenEntries.find((e) => e.id === 'entry-1605-lp')!
+    const spans = renderNumberedEntrySpans(entry, goldenSettings, 1)
+    expect(spans).toEqual([{ kind: 'text', text: '1. OHM949 un LP en Av Luis María Campos 1270.' }])
   })
 })

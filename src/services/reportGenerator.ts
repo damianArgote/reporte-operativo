@@ -45,10 +45,24 @@ function byTimeThenSortKey(a: DailyEntry, b: DailyEntry): number {
   return a.time.localeCompare(b.time) || a.sortKey - b.sortKey
 }
 
-function renderEntryLine(entry: DailyEntry, settings: Settings): LineBlock {
+/**
+ * This entry's rendered spans with no number prefix — the same spans
+ * `generateDailyReport` composes for it (formatter output plus the
+ * `denounced` suffix). Exported so any UI showing a single entry's line
+ * (e.g. the Today list) reuses this instead of re-implementing the text.
+ */
+export function renderEntrySpans(entry: DailyEntry, settings: Settings): Span[] {
   const config = getEntryTypeConfig(entry.type)
-  const spans = withDenouncedSuffix(config.formatter(entry, settings), entry.denounced)
-  return { kind: 'line', spans }
+  return withDenouncedSuffix(config.formatter(entry, settings), entry.denounced)
+}
+
+/** `renderEntrySpans` with "N. " prepended, using the same rule `generateDailyReport` uses for towed entries. */
+export function renderNumberedEntrySpans(entry: DailyEntry, settings: Settings, number: number): Span[] {
+  return prependNumber(renderEntrySpans(entry, settings), number)
+}
+
+function renderEntryLine(entry: DailyEntry, settings: Settings): LineBlock {
+  return { kind: 'line', spans: renderEntrySpans(entry, settings) }
 }
 
 function buildHeaderSection(report: DailyReport): Block[] {

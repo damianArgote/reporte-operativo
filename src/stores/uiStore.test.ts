@@ -12,6 +12,7 @@ describe('uiStore', () => {
     expect(useUiStore.getState()).toMatchObject({
       isAddSheetOpen: false,
       selectedType: null,
+      denouncedPreset: false,
       editingEntryId: null,
       previewOpen: false,
     })
@@ -28,10 +29,23 @@ describe('uiStore', () => {
       expect(useUiStore.getState()).toMatchObject({ isAddSheetOpen: true, selectedType: null })
     })
 
-    it('closes and clears the selected type', () => {
-      useUiStore.getState().openAddSheet('mi')
+    it('opens with the "Denuncia" preset (construction type, denounced defaulted true)', () => {
+      useUiStore.getState().openAddSheet('construction', true)
+      expect(useUiStore.getState()).toMatchObject({
+        isAddSheetOpen: true,
+        selectedType: 'construction',
+        denouncedPreset: true,
+      })
+    })
+
+    it('closes and clears the selected type and preset', () => {
+      useUiStore.getState().openAddSheet('mi', true)
       useUiStore.getState().closeAddSheet()
-      expect(useUiStore.getState()).toMatchObject({ isAddSheetOpen: false, selectedType: null })
+      expect(useUiStore.getState()).toMatchObject({
+        isAddSheetOpen: false,
+        selectedType: null,
+        denouncedPreset: false,
+      })
     })
   })
 
