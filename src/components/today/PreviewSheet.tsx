@@ -24,7 +24,7 @@ export function PreviewSheet() {
         if (!next) togglePreview()
       }}
     >
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+      <SheetContent side="bottom" className="mx-auto max-h-[85svh] w-full max-w-md overflow-y-auto rounded-t-2xl">
         <SheetHeader>
           <SheetTitle>Vista previa</SheetTitle>
         </SheetHeader>

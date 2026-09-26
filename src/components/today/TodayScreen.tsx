@@ -1,4 +1,4 @@
-import { Plus, Settings } from 'lucide-react'
+import { Copy, Eye, Plus, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useReportStore } from '@/stores/reportStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -25,31 +25,23 @@ export function TodayScreen() {
   const copy = useCopyReport()
 
   return (
-    <div className="relative mx-auto flex min-h-svh max-w-md flex-col">
+    <div className="relative mx-auto flex min-h-svh w-full max-w-md flex-col md:border-x md:border-border">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-3 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Hoy</p>
             <h1 className="text-3xl font-semibold tabular-nums">{formatDisplayDate(dateKey)}</h1>
-            {userName && <p className="text-sm text-muted-foreground">Hola, {userName}</p>}
+            {userName && <p className="truncate text-sm text-muted-foreground">Hola, {userName}</p>}
           </div>
-          <div className="flex gap-2 pt-1">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Configuración"
-              onClick={() => navigate('settings')}
-              className="size-11"
-            >
-              <Settings className="size-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={togglePreview}>
-              Vista previa
-            </Button>
-            <Button size="sm" onClick={() => void copy()}>
-              Copiar
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Configuración"
+            onClick={() => navigate('settings')}
+            className="size-11 shrink-0"
+          >
+            <Settings className="size-4" />
+          </Button>
         </div>
         <div className="mt-2">
           <DayHeaderEditor />
@@ -59,23 +51,34 @@ export function TodayScreen() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-2 pb-36">
+      <main className="flex-1 px-4 pt-2 pb-48">
         <h2 className="sr-only">Registros del día</h2>
         <EntryList />
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-border bg-background px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      {/* Thumb zone: the FAB rides on top of the dock so it never overlaps the
+          quick input, whatever the dock height (safe-area insets included). */}
+      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md border-t border-border bg-background px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <Button
+          size="icon"
+          aria-label="Nuevo registro"
+          onClick={() => openAddSheet()}
+          className="absolute right-4 bottom-full mb-4 size-14 rounded-full shadow-lg"
+        >
+          <Plus className="size-6" />
+        </Button>
+        <div className="mb-2 grid grid-cols-2 gap-2">
+          <Button variant="outline" onClick={togglePreview} className="h-11">
+            <Eye />
+            Vista previa
+          </Button>
+          <Button onClick={() => void copy()} className="h-11">
+            <Copy />
+            Copiar
+          </Button>
+        </div>
         <QuickAddBar />
       </div>
-
-      <Button
-        size="icon"
-        aria-label="Nuevo registro"
-        onClick={() => openAddSheet()}
-        className="fixed right-4 bottom-24 z-30 size-14 rounded-full shadow-lg"
-      >
-        <Plus className="size-6" />
-      </Button>
 
       <EntrySheet />
       <PreviewSheet />
